@@ -1,4 +1,4 @@
-from tensorflow.python.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flatten, Input, LeakyReLU, PReLU, Lambda
+from tensorflow.python.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flatten, Input, LeakyReLU, PReLU, Lambda, ZeroPadding2D
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.applications.vgg19 import VGG19
 
@@ -76,6 +76,36 @@ def discriminator(num_filters=64):
     x = Flatten()(x)
 
     x = Dense(1024)(x)
+    x = LeakyReLU(alpha=0.2)(x)
+    x = Dense(1, activation='sigmoid')(x)
+
+    return Model(x_in, x)
+
+
+def downsample(x_in, filters, size, batchnorm=True):
+    x = Conv2D(filters, size, strides=2, padding='same')(x_in)
+    if batchnorm:
+        x = BatchNormalization(momentum=0.8)(x)
+    return LeakyReLU(alpha=0.2)(x)
+
+
+def discriminator_new():
+    x_in = Input(shape=(HR_SIZE, HR_SIZE, 3)) # batch, 96, 96, 3
+    x = Lambda(normalize_m11)(x_in)
+
+    x = downsample(x, 64, 4, False)           # batch, 48, 48, 64
+    x = downsample(x, 128, 4)                 # batch, 24, 24, 128
+    x = downsample(x, 256, 4)                 # batch, 12, 12, 256
+
+    x = ZeroPadding2D()(x)                    # batch, 14, 14, 256
+    x = Conv2D(512, 4, strides=1)(x)          # batch, 11, 11, 512
+    x = BatchNormalization(momentum=0.8)(x)
+    x = LeakyReLU(alpha=0.2)(x)
+
+    x = ZeroPadding2D()(x)                    # batch, 13, 13, 512
+    x = Conv2D(1, 4, strides=1)(x)            # batch, 10, 10, 1
+
+    x = Flatten()(x)
     x = LeakyReLU(alpha=0.2)(x)
     x = Dense(1, activation='sigmoid')(x)
 

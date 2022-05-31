@@ -20,3 +20,19 @@ def plot_sample(lr, sr):
         plt.title(title)
         plt.xticks([])
         plt.yticks([])
+
+
+def save_sample(lr, sr, figname):
+    plt.figure(figsize=(20, 10))
+
+    images = [lr, sr]
+    titles = ['LR', f'SR (x{sr.shape[0] // lr.shape[0]})']
+
+    for i, (img, title) in enumerate(zip(images, titles)):
+        plt.subplot(1, 2, i+1)
+        plt.imshow(img)
+        plt.title(title)
+        plt.xticks([])
+        plt.yticks([])
+        if title == titles[1]:
+            plt.savefig(figname)

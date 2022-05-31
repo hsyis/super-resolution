@@ -152,11 +152,14 @@ class SrganTrainer:
 
         self.binary_cross_entropy = BinaryCrossentropy(from_logits=False)
         self.mean_squared_error = MeanSquaredError()
+        self.now = None
 
     def train(self, train_dataset, steps=200000):
         pls_metric = Mean()
         dls_metric = Mean()
         step = 0
+
+        self.now = time.perf_counter()
 
         for lr, hr in train_dataset.take(steps):
             step += 1
@@ -166,9 +169,11 @@ class SrganTrainer:
             dls_metric(dl)
 
             if step % 50 == 0:
-                print(f'{step}/{steps}, perceptual loss = {pls_metric.result():.4f}, discriminator loss = {dls_metric.result():.4f}')
+                duration = time.perf_counter() - self.now
+                print(f'{step}/{steps}, perceptual loss = {pls_metric.result():.4f}, discriminator loss = {dls_metric.result():.4f} ({duration:.2f}s)')
                 pls_metric.reset_states()
                 dls_metric.reset_states()
+                self.now = time.perf_counter()
 
     @tf.function
     def train_step(self, lr, hr):
